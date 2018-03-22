@@ -17,7 +17,7 @@ describe('/#/login', () => {
       password.sendKeys('a')
       loginButton.click()
 
-      expect(browser.getLocationAbsUrl()).toMatch(/\/search/)
+      expect(browser.getCurrentUrl()).toMatch(/\/search/)
     })
 
     it('should log in Admin with SQLI attack on email field using "admin@<juice-sh.op>\'--"', () => {
@@ -25,7 +25,7 @@ describe('/#/login', () => {
       password.sendKeys('a')
       loginButton.click()
 
-      expect(browser.getLocationAbsUrl()).toMatch(/\/search/)
+      expect(browser.getCurrentUrl()).toMatch(/\/search/)
     })
 
     protractor.expect.challengeSolved({challenge: 'Login Admin'})
@@ -37,7 +37,7 @@ describe('/#/login', () => {
       password.sendKeys('a')
       loginButton.click()
 
-      expect(browser.getLocationAbsUrl()).toMatch(/\/search/)
+      expect(browser.getCurrentUrl()).toMatch(/\/search/)
     })
 
     protractor.expect.challengeSolved({challenge: 'Login Jim'})
@@ -49,7 +49,7 @@ describe('/#/login', () => {
       password.sendKeys('a')
       loginButton.click()
 
-      expect(browser.getLocationAbsUrl()).toMatch(/\/search/)
+      expect(browser.getCurrentUrl()).toMatch(/\/search/)
     })
 
     protractor.expect.challengeSolved({challenge: 'Login Bender'})
@@ -61,7 +61,7 @@ describe('/#/login', () => {
       password.sendKeys('admin123')
       loginButton.click()
 
-      expect(browser.getLocationAbsUrl()).toMatch(/\/search/)
+      expect(browser.getCurrentUrl()).toMatch(/\/search/)
     })
 
     protractor.expect.challengeSolved({challenge: 'Password Strength'})
@@ -73,10 +73,22 @@ describe('/#/login', () => {
       password.sendKeys('J6aVjTgOpRs$?5l+Zkq2AYnCE@RF§P')
       loginButton.click()
 
-      expect(browser.getLocationAbsUrl()).toMatch(/\/search/)
+      expect(browser.getCurrentUrl()).toMatch(/\/search/)
     })
 
     protractor.expect.challengeSolved({challenge: 'Login Support Team'})
+  })
+
+  describe('challenge "loginRapper"', () => {
+    it('should be able to log in with original MC SafeSearch credentials', () => {
+      email.sendKeys('mc.safesearch@' + config.get('application.domain'))
+      password.sendKeys('Mr. N00dles')
+      loginButton.click()
+
+      expect(browser.getCurrentUrl()).toMatch(/\/search/)
+    })
+
+    protractor.expect.challengeSolved({challenge: 'Login MC SafeSearch'})
   })
 
   describe('challenge "oauthUserPassword"', () => {
@@ -85,7 +97,7 @@ describe('/#/login', () => {
       password.sendKeys('YmpvZXJuLmtpbW1pbmljaEBnb29nbGVtYWlsLmNvbQ==')
       loginButton.click()
 
-      expect(browser.getLocationAbsUrl()).toMatch(/\/search/)
+      expect(browser.getCurrentUrl()).toMatch(/\/search/)
     })
 
     protractor.expect.challengeSolved({challenge: 'Login Bjoern'})

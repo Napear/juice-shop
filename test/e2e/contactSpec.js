@@ -1,8 +1,7 @@
 const config = require('config')
-const insecurity = require('../../lib/insecurity')
 
 describe('/#/contact', () => {
-  let comment, rating, submitButton
+  let comment, rating, submitButton, captcha
 
   protractor.beforeEach.login({ email: 'admin@' + config.get('application.domain'), password: 'admin123' })
 
@@ -10,7 +9,9 @@ describe('/#/contact', () => {
     browser.get('/#/contact')
     comment = element(by.model('feedback.comment'))
     rating = element(by.model('feedback.rating'))
+    captcha = element(by.model('feedback.captcha'))
     submitButton = element(by.id('submitButton'))
+    solveNextCaptcha()
   })
 
   describe('challenge "forgedFeedback"', () => {
@@ -65,24 +66,24 @@ describe('/#/contact', () => {
     it('should be possible to trick the sanitization with a masked XSS attack', () => {
       const EC = protractor.ExpectedConditions
 
-      comment.sendKeys('<<script>Foo</script>script>alert("XSS4")<</script>/script>')
+      comment.sendKeys('<<script>Foo</script>script>alert("XSS")<</script>/script>')
       rating.click()
 
       submitButton.click()
 
       browser.get('/#/about')
-      browser.wait(EC.alertIsPresent(), 5000, "'XSS4' alert is not present")
+      browser.wait(EC.alertIsPresent(), 5000, "'XSS' alert is not present")
       browser.switchTo().alert().then(alert => {
-        expect(alert.getText()).toEqual('XSS4')
+        expect(alert.getText()).toEqual('XSS')
         alert.accept()
       })
 
       browser.get('/#/administration')
-      browser.wait(EC.alertIsPresent(), 5000, "'XSS4' alert is not present")
+      browser.wait(EC.alertIsPresent(), 5000, "'XSS' alert is not present")
       browser.switchTo().alert().then(alert => {
-        expect(alert.getText()).toEqual('XSS4')
+        expect(alert.getText()).toEqual('XSS')
         alert.accept()
-        element.all(by.repeater('feedback in feedbacks')).last().element(by.css('.fa-trash')).click()
+        element.all(by.repeater('feedback in feedbacks')).last().element(by.css('.fa-trash-alt')).element(by.xpath('ancestor::a')).click()
       })
     })
 
@@ -91,8 +92,8 @@ describe('/#/contact', () => {
 
   describe('challenge "vulnerableComponent"', () => {
     it('should be possible to post known vulnerable component(s) as feedback', () => {
-      comment.sendKeys('sanitize-html 1.4.2 is vulnerable to masking attacks because it does not act recursively.')
-      comment.sendKeys('sequelize 1.7.11 is vulnerable to SQL Injection via GeoJSON.')
+      comment.sendKeys('sanitize-html 1.4.2 is non-recursive.')
+      comment.sendKeys('express-jwt 0.1.3 has broken crypto.')
       rating.click()
 
       submitButton.click()
@@ -110,17 +111,6 @@ describe('/#/contact', () => {
     })
 
     protractor.expect.challengeSolved({ challenge: 'Weird Crypto' })
-  })
-
-  describe('challenge "jwtSecretCrypto"', () => {
-    it('should be possible to post secret JWT token as feedback', () => {
-      comment.sendKeys('The JWT token secret is ' + insecurity.defaultSecret)
-      rating.click()
-
-      submitButton.click()
-    })
-
-    protractor.expect.challengeSolved({ challenge: 'Find JWT Secret' })
   })
 
   describe('challenge "typosquattingNpm"', () => {
@@ -145,17 +135,41 @@ describe('/#/contact', () => {
     protractor.expect.challengeSolved({ challenge: 'Typosquatting Tier 2' })
   })
 
-  describe('challenge "zeroStars"', () => {
-    it('should be possible to post feedback with zero stars by clicking rating twice', () => {
-      browser.executeScript('var $http = angular.injector([\'juiceShop\']).get(\'$http\'); $http.post(\'/api/Feedbacks\', {comment: \'This is the worst shop I have ever been to!\', rating: 0});')
+  describe('challenge "zeroStars"', () => { // FIXME Retrieve captcha first via $http.get() and then send id & captcha along with subsequent $http.post()
+    it('should be possible to post feedback with zero stars by double-clicking rating widget', () => {
+      comment.sendKeys('No stars for ya here, yo!')
+      rating.click()
+      element(by.className('glyphicon-star')).click()
+
+      submitButton.click()
     })
 
     protractor.expect.challengeSolved({ challenge: 'Zero Stars' })
   })
-})
 
-function expectPersistedCommentToMatch (expectation) {
-  browser.get('/#/administration')
-  const feedbackComments = element.all(by.repeater('feedback in feedbacks').column('comment'))
-  expect(feedbackComments.last().getText()).toMatch(expectation)
-}
+  describe('challenge "captchaBypass"', () => {
+    it('should be possible to post 10 or more customer feedbacks in less than 10 seconds', () => {
+      for (var i = 0; i < 11; i++) {
+        comment.sendKeys('Spam #' + i)
+        rating.click()
+        submitButton.click()
+        solveNextCaptcha() // first CAPTCHA was already solved in beforeEach
+      }
+    })
+
+    protractor.expect.challengeSolved({ challenge: 'CAPTCHA Bypass' })
+  })
+
+  function solveNextCaptcha () {
+    element(by.id('captcha')).getText().then((text) => {
+      const answer = eval(text).toString() // eslint-disable-line no-eval
+      captcha.sendKeys(answer)
+    })
+  }
+
+  function expectPersistedCommentToMatch (expectation) {
+    browser.get('/#/administration')
+    const feedbackComments = element.all(by.repeater('feedback in feedbacks').column('comment'))
+    expect(feedbackComments.last().getText()).toMatch(expectation)
+  }
+})

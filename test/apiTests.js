@@ -1,11 +1,9 @@
-'use strict'
-
 const spawn = require('cross-spawn')
 const colors = require('colors/safe')
 const server = require('./../server.js')
 
 server.start(() => {
-  const jest = spawn('jest')
+  const jest = spawn('jest', ['-i'])
   function logToConsole (data) {
     console.log(String(data))
   }

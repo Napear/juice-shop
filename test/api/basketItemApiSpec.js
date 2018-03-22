@@ -37,7 +37,7 @@ describe('/api/BasketItems', () => {
         quantity: 1
       }
     })
-      .expect('status', 200)
+      .expect('status', 201)
       .done(done)
   })
 })
@@ -72,9 +72,9 @@ describe('/api/BasketItems/:id', () => {
         quantity: 3
       }
     })
-      .expect('status', 200)
-      .then(res => frisby.get(API_URL + '/BasketItems/' + res.json.data.id, { headers: authHeader })
-      .expect('status', 200))
+      .expect('status', 201)
+      .then(({json}) => frisby.get(API_URL + '/BasketItems/' + json.data.id, { headers: authHeader })
+        .expect('status', 200))
       .done(done)
   })
 
@@ -87,15 +87,15 @@ describe('/api/BasketItems/:id', () => {
         quantity: 4
       }
     })
-      .expect('status', 200)
-      .then(res => frisby.put(API_URL + '/BasketItems/' + res.json.data.id, {
+      .expect('status', 201)
+      .then(({json}) => frisby.put(API_URL + '/BasketItems/' + json.data.id, {
         headers: authHeader,
         body: {
           quantity: 20
         }
       })
-      .expect('status', 200)
-      .expect('json', 'data', { quantity: 20 }))
+        .expect('status', 200)
+        .expect('json', 'data', { quantity: 20 }))
       .done(done)
   })
 
@@ -108,9 +108,9 @@ describe('/api/BasketItems/:id', () => {
         quantity: 5
       }
     })
-      .expect('status', 200)
-      .then(res => frisby.del(API_URL + '/BasketItems/' + res.json.data.id, { headers: authHeader })
-      .expect('status', 200))
+      .expect('status', 201)
+      .then(({json}) => frisby.del(API_URL + '/BasketItems/' + json.data.id, { headers: authHeader })
+        .expect('status', 200))
       .done(done)
   })
 })
